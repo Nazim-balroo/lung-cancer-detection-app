@@ -5,7 +5,7 @@ from PIL import Image
 import os
 
 # -------------------------------
-# Page configuration (must be first Streamlit command)
+# Page configuration
 # -------------------------------
 st.set_page_config(
     page_title="Lung Cancer Detection",
@@ -24,45 +24,64 @@ def load_model():
 model = load_model()
 
 # -------------------------------
-# Class names
+# Class names and explanations
 # -------------------------------
 class_names = ["Normal", "Adenocarcinoma", "Squamous Cell Carcinoma"]
 
+explanations = {
+    "Normal": "🟢 No signs of cancer were detected in the image. The lung tissue appears healthy.",
+    "Adenocarcinoma": "🔴 A type of non-small cell lung cancer that originates in mucus-secreting glands.",
+    "Squamous Cell Carcinoma": "🟡 A form of lung cancer arising in the squamous cells lining the airways, often linked to smoking."
+}
+
 # -------------------------------
-# Streamlit App UI
+# UI Header
 # -------------------------------
 st.title("🩺 Lung Cancer Detection using VGG16")
+
 st.markdown(
     """
-    Upload a lung histopathology image, and the model will classify it as one of the following:
-    - **Normal**
-    - **Adenocarcinoma**
-    - **Squamous Cell Carcinoma**
+    Upload a lung histopathology image (H&E stained), and this AI-powered tool will classify it into:
+    - 🟢 **Normal**
+    - 🔴 **Adenocarcinoma**
+    - 🟡 **Squamous Cell Carcinoma**
+    
+    > ⚠️ **Disclaimer**: This tool is for educational and research purposes only. It does **not** provide medical advice. Always consult a qualified healthcare provider for diagnosis.
     """
 )
 
-# File uploader
-uploaded_file = st.file_uploader("📤 Upload Image", type=["jpg", "jpeg", "png"])
+# -------------------------------
+# Image Upload
+# -------------------------------
+uploaded_file = st.file_uploader("📤 Upload Lung Tissue Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Open and display the uploaded image
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    try:
+        image = Image.open(uploaded_file).convert("RGB")
+        st.image(image, caption="📷 Uploaded Image", use_column_width=True)
 
-    # Preprocess image for VGG16
-    img = image.resize((224, 224))
-    img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+        # Preprocess for VGG16
+        img = image.resize((224, 224))
+        img_array = np.array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
 
-    # Model prediction
-    preds = model.predict(img_array)
-    predicted_class = np.argmax(preds[0])
-    confidence = preds[0][predicted_class] * 100
+        # Make prediction
+        preds = model.predict(img_array)
+        predicted_class_index = np.argmax(preds[0])
+        predicted_class = class_names[predicted_class_index]
+        confidence = float(preds[0][predicted_class_index]) * 100
 
-    # Display prediction results
-    st.subheader("📊 Prediction Results")
-    st.success(f"**Predicted Class:** {class_names[predicted_class]}")
-    st.info(f"**Confidence:** {confidence:.2f}%")
+        # Display prediction
+        st.subheader("📊 Prediction Results")
+        st.success(f"**Predicted Class:** {predicted_class}")
+        st.info(f"**Confidence:** {confidence:.2f}%")
 
-    # Show probability distribution as bar chart
-    st.bar_chart({class_names[i]: float(preds[0][i]) for i in range(len(class_names))})
+        # Explanation
+        st.markdown(f"📘 **What this means:** {explanations[predicted_class]}")
+
+        # Show probability distribution
+        st.markdown("### 📈 Class Probabilities")
+        st.bar_chart({class_names[i]: float(preds[0][i]) for i in range(len(class_names))})
+
+    except Exception as e:
+        st.error(f"Error processing image: {str(e)}")
