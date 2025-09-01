@@ -6,10 +6,8 @@ from PIL import Image
 # Load Model
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(
-        r"C:\Users\NAZIM BALROO\OneDrive\Desktop\nazim1\VGG_lung_model.h5"
-    )
-
+    model_path = os.path.join(os.path.dirname(__file__), "VGG_lung_model.h5")
+    return tf.keras.models.load_model(model_path)
 model = load_model()
 
 # Correct Class Names
