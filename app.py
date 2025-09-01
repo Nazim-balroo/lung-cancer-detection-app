@@ -1,3 +1,4 @@
+import os                # <-- Add this
 import streamlit as st
 import tensorflow as tf
 import numpy as np
@@ -8,8 +9,8 @@ from PIL import Image
 def load_model():
     model_path = os.path.join(os.path.dirname(__file__), "VGG_lung_model.h5")
     return tf.keras.models.load_model(model_path)
-model = load_model()
 
+model = load_model()
 # Correct Class Names
 class_names = ["Normal", "Adenocarcinoma", "Squamous Cell Carcinoma"]
 
